@@ -64,7 +64,7 @@ void ajouterFilm(ListeFilms& listeDeFilms, Film& nouveauFilm) {
 	const int capacite = listeDeFilms.capacite, nElements = listeDeFilms.nElements, indexDernierElement = listeDeFilms.nElements;// index du nouveau film dans la liste de films
 
 	/*1- Determiner dans quel cas d'allocation on est*/
-	int tailleAllocation = obtenirTailleAllocation(capacite,nElements) ;
+	int tailleAllocation = determinerTailleAllocation(capacite,nElements) ;
 
 	/*2- Allocation et Liberation de Memoire*/
 	
@@ -91,8 +91,43 @@ void ajouterFilm(ListeFilms& listeDeFilms, Film& nouveauFilm) {
 }
 
 //TODO: Une fonction pour enlever un Film d'une ListeFilms (enlever le pointeur) sans effacer le film; la fonction prenant en paramètre un pointeur vers le film à enlever.  L'ordre des films dans la liste n'a pas à être conservé.
+void retirerFilm(ListeFilms& listeDeFilms, Film* ptrFilmeExclu) {
+	const int nElements = listeDeFilms.nElements;
+	for (int i : range(nElements)) {
+		bool estFilmCorrespondant = (obtenirPtrFilme(listeDeFilms, i) == ptrFilmeExclu);
+		if (estFilmCorrespondant)
+			listeDeFilms.elements[i] = nullptr; // ne point vers rien 
+	}
+}
+
 
 //TODO: Une fonction pour trouver un Acteur par son nom dans une ListeFilms, qui retourne un pointeur vers l'acteur, ou nullptr si l'acteur n'est pas trouvé.  Devrait utiliser span.
+
+// Pour chaque pointeurFilme de la liste de filme
+	// variable = objetFilme
+	// Pour chaque pointeurActeur dans la liste d'acteur
+	// variable = objetActeur
+	// variable nomacteur
+	// Si nomActeur = nomCherche 
+		// retourner le pointeurActeur
+// retourner nullptr
+
+
+Acteur* ObtenirPtrActeurDansListeFilme( const ListeFilms& ListeDeFilmes, string nomActeurCible) {
+	span <Film*> SpanListeDeFilmes = { obtenirTableauFilme(ListeDeFilmes) , size_t(ListeDeFilmes.capacite) };
+	for (Film* ptrFilm : SpanListeDeFilmes) {
+		Film filme = *ptrFilm; 
+		span <Acteur*> SpanListeDeActeurs = { obtenirTableauActeur(filme.acteurs) , size_t(filme.acteurs.capacite) };
+		for (Acteur* ptrActeur : SpanListeDeActeurs) {
+			Acteur acteur = *ptrActeur;
+			string nomActeurPotentiel = acteur.nom ;
+			if (nomActeurPotentiel == nomActeurCible)
+				return ptrActeur;
+		}
+	}
+	return nullptr;
+}
+
 
 //TODO: Compléter les fonctions pour lire le fichier et créer/allouer une ListeFilms.  La ListeFilms devra être passée entre les fonctions, pour vérifier l'existence d'un Acteur avant de l'allouer à nouveau (cherché par nom en utilisant la fonction ci-dessus).
 Acteur* lireActeur(istream& fichier)

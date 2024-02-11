@@ -1,24 +1,35 @@
-#include <iostream> 
-#include ".\cppitertools\range.hpp"
-#include "./GSL/include/gsl/span"
+#include <iostream>
 
-using namespace std ; 
-using namespace iter ;
-using namespace gsl;
+struct MyStruct {
+    int myArray[5];
+};
 
-
-void EditTableau(int* *(&tableau)){
-    int num = 5 ; 
-    int* ptrNum = &num ;
-    tableau[0] = ptrNum ; 
+void modifyArray(MyStruct& myStruct) {
+    // Modifying the array inside the function
+    for (int i = 0; i < 5; ++i) {
+        myStruct.myArray[i] *= 2;
+    }
 }
 
-int main(){
-    int num = 99 ; 
-    int* ptrNum = &num ;
-    int* *tableau {&ptrNum};
-    cout << tableau[0] << endl;
-    EditTableau(tableau) ;
-    cout << tableau[0] << endl;
+int main() {
+    MyStruct myStruct = {1, 2, 3, 4, 5};
 
+    // Before modification
+    std::cout << "Before modification: ";
+    for (int i = 0; i < 5; ++i) {
+        std::cout << myStruct.myArray[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // Modifying the array by passing a reference to the struct
+    modifyArray(myStruct);
+
+    // After modification
+    std::cout << "After modification: ";
+    for (int i = 0; i < 5; ++i) {
+        std::cout << myStruct.myArray[i] << " ";
+    }
+    std::cout << std::endl;
+
+    return 0;
 }
