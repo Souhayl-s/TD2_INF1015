@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS // On permet d'utiliser les fonctions de copies de chaînes qui sont considérées non sécuritaires.
 
 #include "structures.hpp"      // Structures de données pour la collection de films en mémoire.
-#include "operations_allocation.hpp" 
+#include "mes_fonctions.hpp" 
 
 #include <iostream>
 #include <fstream>
@@ -59,9 +59,9 @@ string lireString(istream& fichier)
 #pragma endregion//}
 
 //TODO: Une fonction pour ajouter un Film à une ListeFilms, le film existant déjà; on veut uniquement ajouter le pointeur vers le film existant.  Cette fonction doit doubler la taille du tableau alloué, avec au minimum un élément, dans le cas où la capacité est insuffisante pour ajouter l'élément.  Il faut alors allouer un nouveau tableau plus grand, copier ce qu'il y avait dans l'ancien, et éliminer l'ancien trop petit.  Cette fonction ne doit copier aucun Film ni Acteur, elle doit copier uniquement des pointeurs.
-void ajouterFilm(ListeFilms& listeDeFilms, Film& nouveauFilm) {
+void ajouterFilm(ListeFilms& listeDeFilms, Film* ptrNouveauFilm) {
 
-	const int capacite = listeDeFilms.capacite, nElements = listeDeFilms.nElements, indexDernierElement = listeDeFilms.nElements;// index du nouveau film dans la liste de films
+	const int capacite = listeDeFilms.capacite, nElements = listeDeFilms.nElements, indexNouvelElement = listeDeFilms.nElements;// index du nouveau film dans la liste de films
 
 	/*1- Determiner dans quel cas d'allocation on est*/
 	int tailleAllocation = determinerTailleAllocation(capacite,nElements) ;
@@ -82,11 +82,11 @@ void ajouterFilm(ListeFilms& listeDeFilms, Film& nouveauFilm) {
 			// liberer la memoire pris par l'ancien tableau de pointeurs
 			libererMemoireListeFilm(listeDeFilms);
 		}
-		// Mise a jour de l'attribut nElements
+		// Mise a jour de l'attribut Elements
 		listeDeFilms.elements = nouveauTableauFilmes;
 	}
-
-	listeDeFilms.elements[indexDernierElement] = &nouveauFilm; // assigner un pointeur avec l'adresse du nouveau film
+	++listeDeFilms.nElements; // incrementer le nombre d'elements
+	listeDeFilms.elements[indexNouvelElement] = ptrNouveauFilm; // assigner un pointeur qui a l'adresse du nouveau film
 
 }
 
@@ -98,48 +98,44 @@ void retirerFilm(ListeFilms& listeDeFilms, Film* ptrFilmeExclu) {
 		if (estFilmCorrespondant)
 			listeDeFilms.elements[i] = nullptr; // ne point vers rien 
 	}
+	--listeDeFilms.nElements; // decrementer le nombre d'elements
 }
 
 
 //TODO: Une fonction pour trouver un Acteur par son nom dans une ListeFilms, qui retourne un pointeur vers l'acteur, ou nullptr si l'acteur n'est pas trouvé.  Devrait utiliser span.
 
-// Pour chaque pointeurFilme de la liste de filme
-	// variable = objetFilme
-	// Pour chaque pointeurActeur dans la liste d'acteur
-	// variable = objetActeur
-	// variable nomacteur
-	// Si nomActeur = nomCherche 
-		// retourner le pointeurActeur
-// retourner nullptr
-
-
-Acteur* ObtenirPtrActeurDansListeFilme( const ListeFilms& ListeDeFilmes, string nomActeurCible) {
-	span <Film*> SpanListeDeFilmes = { obtenirTableauFilme(ListeDeFilmes) , size_t(ListeDeFilmes.capacite) };
-	for (Film* ptrFilm : SpanListeDeFilmes) {
-		Film filme = *ptrFilm; 
-		span <Acteur*> SpanListeDeActeurs = { obtenirTableauActeur(filme.acteurs) , size_t(filme.acteurs.capacite) };
-		for (Acteur* ptrActeur : SpanListeDeActeurs) {
-			Acteur acteur = *ptrActeur;
-			string nomActeurPotentiel = acteur.nom ;
-			if (nomActeurPotentiel == nomActeurCible)
-				return ptrActeur;
-		}
+Acteur* ObtenirPtrActeurDansListeFilme( const ListeFilms& listeDeFilmes, string nomActeurCible) {
+	span <Film*> SpanListeDeFilmes = { obtenirTableauFilme(listeDeFilmes) , size_t(listeDeFilmes.capacite) };
+	for (Film* ptrFilm : SpanListeDeFilmes.first(listeDeFilmes.nElements) ) {
+		Acteur* PtrActeur = ObtenirPtrActeurDansFilme(ptrFilm, nomActeurCible);
+		bool estDansFilme = (PtrActeur != nullptr); // la fonction retourne null ptr si l'acteur ne joue pas dans le film
+		if (estDansFilme)
+			return PtrActeur;
 	}
 	return nullptr;
-}
-
+	}
 
 //TODO: Compléter les fonctions pour lire le fichier et créer/allouer une ListeFilms.  La ListeFilms devra être passée entre les fonctions, pour vérifier l'existence d'un Acteur avant de l'allouer à nouveau (cherché par nom en utilisant la fonction ci-dessus).
-Acteur* lireActeur(istream& fichier)
+Acteur* lireActeur(istream& fichier , const ListeFilms &listeDeFilmes)
 {
 	Acteur acteur = {};
 	acteur.nom = lireString(fichier);
 	acteur.anneeNaissance = int(lireUintTailleVariable(fichier));
 	acteur.sexe = char(lireUintTailleVariable(fichier));
-	return {}; //TODO: Retourner un pointeur soit vers un acteur existant ou un nouvel acteur ayant les bonnes informations, selon si l'acteur existait déjà.  Pour fins de débogage, affichez les noms des acteurs crées; vous ne devriez pas voir le même nom d'acteur affiché deux fois pour la création.
+
+	Acteur* ptrActeur = ObtenirPtrActeurDansListeFilme(listeDeFilmes, acteur.nom); 
+	bool estDansListeFilmes = (ptrActeur != nullptr);
+	if (estDansListeFilmes)
+		return ptrActeur; 
+	// cas ou l'acteur n'est pas present dans la liste
+
+	ptrActeur = new Acteur(acteur); // initialiser le pointeur avec la bonne valeur en allouant dynamiquement
+	(ptrActeur->joueDans).nElements = (ptrActeur->joueDans).capacite = 0; // initialiser a 0 le nb elements et la capacite de la liste de filme de l'acteur
+	return ptrActeur; //TODO: Retourner un pointeur soit vers un acteur existant ou un nouvel acteur ayant les bonnes informations, selon si l'acteur existait déjà.  Pour fins de débogage, affichez les noms des acteurs crées; vous ne devriez pas voir le même nom d'acteur affiché deux fois pour la création.
+
 }
 
-Film* lireFilm(istream& fichier)
+Film* lireFilm(istream& fichier , const ListeFilms& listeDeFilmes)
 {
 	Film film = {};
 	film.titre = lireString(fichier);
@@ -147,11 +143,25 @@ Film* lireFilm(istream& fichier)
 	film.anneeSortie = int(lireUintTailleVariable(fichier));
 	film.recette = int(lireUintTailleVariable(fichier));
 	film.acteurs.nElements = int(lireUintTailleVariable(fichier));  //NOTE: Vous avez le droit d'allouer d'un coup le tableau pour les acteurs, sans faire de réallocation comme pour ListeFilms.  Vous pouvez aussi copier-coller les fonctions d'allocation de ListeFilms ci-dessus dans des nouvelles fonctions et faire un remplacement de Film par Acteur, pour réutiliser cette réallocation.
+	
+
+
+	// allouer la memoire pour le tableau Acteur*
+	int capacite = film.acteurs.nElements;
+	Acteur** tableauPtrActeurs = new Acteur * [capacite];
+	// maj attribut de l'objet film
+	film.acteurs.elements= tableauPtrActeurs;
+	// allouer memoire pour un objet film dans la memoire en l'intialisant a la bonne valeur
+	Film* ptrFilm = new Film(film);
+
 	for (int i = 0; i < film.acteurs.nElements; i++) {
-		lireActeur(fichier); //TODO: Placer l'acteur au bon endroit dans les acteurs du film.
+		Acteur *ptrActeur = lireActeur(fichier , listeDeFilmes); //TODO: Placer l'acteur au bon endroit dans les acteurs du film.
 		//TODO: Ajouter le film à la liste des films dans lesquels l'acteur joue.
+
+		obtenirListeSpecifiquePtrActeurs(ptrFilm)[i] = ptrActeur; // ajouter l'acteur au bon emplacement 
+		ajouterFilm(ptrActeur->joueDans, ptrFilm); // ajouter le film la liste de films de l'acteur
 	}
-	return {}; //TODO: Retourner le pointeur vers le nouveau film.
+	return ptrFilm; //TODO: Retourner le pointeur vers le nouveau film.
 }
 
 ListeFilms creerListe(string nomFichier)

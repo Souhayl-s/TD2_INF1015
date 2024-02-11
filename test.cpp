@@ -1,5 +1,16 @@
-#include <iostream>
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <limits>
+#include <algorithm>
+
+#include "cppitertools/range.hpp"
+#include "./GSL/include/gsl/span"
+
+using namespace std;
+using namespace iter;
+using namespace gsl;
 struct MyStruct {
     int myArray[5];
 };
@@ -11,25 +22,30 @@ void modifyArray(MyStruct& myStruct) {
     }
 }
 
+struct ListeNum1D{
+    int* numbers ;
+} ;
+struct ListeNum2D{
+    ListeNum1D liste ;
+} ;
+
+int* obtenirList1D(ListeNum2D* listaModifier){
+    return (listaModifier->liste).numbers ; 
+}
+
+
 int main() {
-    MyStruct myStruct = {1, 2, 3, 4, 5};
 
-    // Before modification
-    std::cout << "Before modification: ";
-    for (int i = 0; i < 5; ++i) {
-        std::cout << myStruct.myArray[i] << " ";
-    }
-    std::cout << std::endl;
+    ListeNum1D sample ; 
+    sample.numbers = new int [2] {0,0} ; 
 
-    // Modifying the array by passing a reference to the struct
-    modifyArray(myStruct);
+    ListeNum2D sample2D = {sample} ;
+    ListeNum2D* ptrList2D = &sample2D ;
 
-    // After modification
-    std::cout << "After modification: ";
-    for (int i = 0; i < 5; ++i) {
-        std::cout << myStruct.myArray[i] << " ";
-    }
-    std::cout << std::endl;
+    cout << (ptrList2D->liste).numbers[0] <<endl; 
+    obtenirList1D(ptrList2D)[0] = 999 ;
+    cout << (ptrList2D->liste).numbers[0] ; 
+
 
     return 0;
 }
