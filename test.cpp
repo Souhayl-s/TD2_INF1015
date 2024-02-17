@@ -25,27 +25,13 @@ void modifyArray(MyStruct& myStruct) {
 struct ListeNum1D{
     int* numbers ;
 } ;
-struct ListeNum2D{
-    ListeNum1D liste ;
-} ;
 
-int* obtenirList1D(ListeNum2D* listaModifier){
-    return (listaModifier->liste).numbers ; 
+void EditStruct(ListeNum1D &list){
+    list.numbers[0] = 99 ; 
 }
 
 
 int main() {
-
-    ListeNum1D sample ; 
-    sample.numbers = new int [2] {0,0} ; 
-
-    ListeNum2D sample2D = {sample} ;
-    ListeNum2D* ptrList2D = &sample2D ;
-
-    cout << (ptrList2D->liste).numbers[0] <<endl; 
-    obtenirList1D(ptrList2D)[0] = 999 ;
-    cout << (ptrList2D->liste).numbers[0] ; 
-
-
+    cout << "\n35m════════════════════════════════════════\n" ;
     return 0;
 }
